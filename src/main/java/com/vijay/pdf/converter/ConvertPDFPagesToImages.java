@@ -2,12 +2,12 @@ package com.vijay.pdf.converter;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.List;
 
 import javax.imageio.ImageIO;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 
 /**
  * Read the pdf file as a source file and convert it into image.
@@ -17,10 +17,10 @@ import org.apache.pdfbox.pdmodel.PDPage;
  */
 public class ConvertPDFPagesToImages {
 
-	private static final String TYPE = "jpeg"; // jpg, jpeg, png, bmp, gif
-	private static final int IMAGE_TYPE = BufferedImage.TYPE_INT_RGB;
+	private static final String FILE_EXTENSION = "jpeg"; // jpg, jpeg, png, bmp, gif
+	private static final ImageType IMAGE_TYPE = ImageType.RGB;
 	// If you need small size file then use smaller number.
-	private static final int RESOLUTION = 72 * 2 * 2;
+	private static final int DPI = 300;
 
 	public static void main(String[] args) {
 
@@ -46,18 +46,15 @@ public class ConvertPDFPagesToImages {
 				return;
 			}
 			PDDocument document = PDDocument.load(sourceFile);
-			@SuppressWarnings("unchecked")
-			List<PDPage> list = document.getDocumentCatalog().getAllPages();
-
+			PDFRenderer pdfRenderer = new PDFRenderer(document);
+			int numberOfPages = document.getNumberOfPages();
+			System.out.println("Total number of page in source pdf file: " + numberOfPages);
 			String fileName = sourceFile.getName().replace(".pdf", "");
-			int pageNumber = 1;
-			for (PDPage page : list) {
-				BufferedImage image = page.convertToImage(IMAGE_TYPE, RESOLUTION);
-				File outputfile = new File(
-						destinationDir + fileName + "_" + pageNumber + "_" + IMAGE_TYPE + "." + TYPE);
-				ImageIO.write(image, TYPE, outputfile);
-				System.out.println("Image has created at " + outputfile.getAbsolutePath());
-				pageNumber++;
+
+			for (int i = 0; i < numberOfPages; i++) {
+				File outPutFile = new File(destinationDir + fileName + "_" + (i+1) + "." + FILE_EXTENSION);
+				BufferedImage bImage = pdfRenderer.renderImageWithDPI(i, DPI, IMAGE_TYPE);
+				ImageIO.write(bImage, FILE_EXTENSION, outPutFile);
 			}
 			document.close();
 			System.out.println("Done.");
